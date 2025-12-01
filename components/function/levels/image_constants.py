@@ -40,10 +40,10 @@ TOP3 = {
 FONT_TYPE = ".otf"
 
 BIGNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 100)
-MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 90)
+MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 86)
 TITLE = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 105)
-BODY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 75)
-BODY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", 45)
+BODY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 72)
+BODY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", 42)
 TINY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 33)
 TINY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", 33)
 
@@ -73,6 +73,7 @@ LB_WIDTH = 1800             # height is calculated dynamically based on amount o
 LB_TITLEBAR_HEIGHT = 150    # height of titlebar at the top of image, only exists once
 LB_TITLE_PADDING_U = 30
 LB_TITLE_PADDING_L = 30
+LB_ICON_RADIUS = LB_TITLEBAR_HEIGHT - LB_TITLE_PADDING_U
 LB_TITLE_META_WIDTH = 345   # region reserved for date & page count
 LB_TITLE_TEXT_WIDTH = LB_WIDTH - LB_TITLE_META_WIDTH
 

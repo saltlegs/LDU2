@@ -500,12 +500,7 @@ class Levels(commands.Cog):
         image_path = str(image_path)
         file = discord.File(image_path, filename="rank_card.png")
 
-        # if it's before 10th december 2025
-        if datetime.now(timezone.utc) < datetime(2025, 12, 10, tzinfo=timezone.utc):
-            await interaction.response.send_message(content="-# (noticed a change in your level? the xp system has been tweaked in c-ldu version 1.2.5 to make higher levels more achievable!)",file=file)
-
-        else:
-            await interaction.response.send_message(file=file)
+        await interaction.response.send_message(file=file)
 
     # TODO: make themes a proper config thing
 
@@ -516,6 +511,11 @@ class Levels(commands.Cog):
             log(f"~1leaderboard: could not find config handler for guild {interaction.guild.name}")
             return
         theme = confighandler.get_attribute("colour", fallback=(40, 40, 40))
+
+        if interaction.guild.icon is not None:
+            guild_icon = await interaction.guild.icon.read()
+        else:
+            guild_icon = None
 
         leaderboard = lvbsc.format_leaderboard(
             guild_id=interaction.guild.id,
@@ -528,19 +528,15 @@ class Levels(commands.Cog):
             leaderboard=leaderboard,
             max_rows=6,
             page_requested=page,
-            theme=theme
+            theme=theme,
+            icon=guild_icon
         )
 
         image_path = str(image_path)
 
         file = discord.File(image_path, filename="leaderboard.png")
 
-        # if it's before 3rd december 2025 let people know about the xp changes
-        if datetime.now(timezone.utc) < datetime(2025, 12, 3, tzinfo=timezone.utc):
-            await interaction.response.send_message(content="-# (noticed a change in your level? the xp system has been tweaked in c-ldu version 1.2.5 to make higher levels more achievable!)",file=file)
-
-        else:
-            await interaction.response.send_message(file=file)
+        await interaction.response.send_message(file=file)
 
             
 

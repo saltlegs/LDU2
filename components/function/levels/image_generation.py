@@ -3,6 +3,7 @@ import math
 import pathlib
 import random
 from datetime import datetime
+import io
 
 import components.shared_instances as shared
 import components.function.levels.image_constants as C
@@ -143,8 +144,8 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     # 6 PROGRESS,           7 USER THEME
     log(f"generating user unit for {entry[1]}")
 
-    if entry[7] is None:
-        theme_palette = theme  # already a palette dict
+    if True: #entry[7] is None:
+        theme_palette = theme 
     else:
         theme_palette = b.make_palette(entry[7])
 
@@ -215,7 +216,7 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     return surface, surface.split()[3] # return mask
 
 
-def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list, max_rows: int, page_requested: int, theme: str = "red") -> str:
+def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list, max_rows: int, page_requested: int, theme: str = "red", icon=None) -> str:
     "returns the path of the leaderboard image"
 
     debug = False
@@ -265,9 +266,29 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
     )
     draw = ImageDraw.Draw(surface)
 
-    title_text = guild_name.upper()
+    icon_offset = 0
+    g_icon = icon
+    if g_icon is not None:
+        icon_offset = C.LB_ICON_RADIUS
+        icon = Image.open(io.BytesIO(g_icon))
+        icon = icon.resize((
+            C.LB_ICON_RADIUS,
+            C.LB_ICON_RADIUS),
+            resample=Image.LANCZOS
+        )
+
+        mask = Image.new("L", (C.LB_ICON_RADIUS, C.LB_ICON_RADIUS), 0)
+        rounded_rect(
+            draw=ImageDraw.Draw(mask),
+            box=(0, 0, C.LB_ICON_RADIUS, C.LB_ICON_RADIUS),
+            radius=20,
+            fill=255
+        )
+        surface.paste(icon, (C.LB_TITLE_PADDING_L//2, C.LB_TITLE_PADDING_U//2), mask)
+
+    title_text = guild_name
     title_font = C.TITLE
-    title_max_chars = get_max_chars(title_font, C.LB_TITLE_TEXT_WIDTH)
+    title_max_chars = get_max_chars(title_font, C.LB_TITLE_TEXT_WIDTH - icon_offset)
 
     title_text = truncate(
         text=title_text,
@@ -276,7 +297,7 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
 
     draw.text(
         xy = (
-            C.LB_TITLE_PADDING_L,
+            C.LB_TITLE_PADDING_L + icon_offset,
             C.LB_TITLE_PADDING_U
         ),
         text=title_text,
@@ -286,7 +307,7 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
 
     meta_text_top = f"{datetime.now().strftime('%d %m %y')}" 
     meta_text_middle = f"page {page_requested} / {total_pages}"
-    meta_text_bottom = f"version {shared.version}"
+    meta_text_bottom = f"c-ldu {shared.version}"
     meta_text_font = C.TINY_LIGHT
     meta_text_max_chars = get_max_chars(meta_text_font, C.LB_TITLE_META_WIDTH)
     meta_text_top = truncate(
@@ -322,17 +343,17 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
         anchor="rt"
     )  
 
-    # draw.text(
-    #     xy = (
-    #         C.LB_WIDTH - C.LB_TITLE_PADDING_L,
-    #         C.LB_TITLE_PADDING_U + (meta_text_font.getbbox(meta_text_top)[3] + 5) * 2
-    #     ),
-    #     align = "right",
-    #     text = f"{meta_text_bottom}",
-    #     font = meta_text_font,
-    #     fill = theme_palette["text"],
-    #     anchor="rt"
-    # )
+    draw.text(
+        xy = (
+            C.LB_WIDTH - C.LB_TITLE_PADDING_L,
+            C.LB_TITLE_PADDING_U + (meta_text_font.getbbox(meta_text_top)[3] + 5) * 2
+        ),
+        align = "right",
+        text = f"{meta_text_bottom}",
+        font = meta_text_font,
+        fill = theme_palette["text"],
+        anchor="rt"
+    )
 
 
     # user unit loop
