@@ -351,6 +351,25 @@ class Levels(commands.Cog):
             await interaction.response.send_message(f"your personal theme color has been set to {colour}", ephemeral=True)
             return
 
+    @discord.app_commands.default_permissions(manage_roles=True)
+    @discord.app_commands.command(name="set_xp_range", description="set a role to be given on level up")
+    async def set_xp_range(self, interaction: discord.Interaction, min:int, max:int):
+        confighandler = self.confighandlers.get(interaction.guild.id, None)
+        if confighandler is None:
+            log(f"~1set_xp_range: could not find config handler for guild {interaction.guild.name}")
+            return
+        
+        if min < 0 or max < 0 or min > max:
+            await interaction.response.send_message("invalid range, make sure 0 <= min <= max", ephemeral=True)
+            return
+        
+        confighandler.set_attribute("points_range", (min, max))
+        average = (min + max) // 2
+        await interaction.response.send_message(f"set xp range to {min}-{max} (average {average})", ephemeral=True)
+        log(f"~2set xp range to {min}-{max} in guild {interaction.guild.name}")
+
+        
+
 
     @discord.app_commands.default_permissions(manage_roles=True)
     @discord.app_commands.command(name="set_level_role", description="set a role to be given on level up")
