@@ -24,7 +24,7 @@ class RoleUtil(commands.Cog):
         elif len(members) > 150:
             permissions = interaction.channel.permissions_for(interaction.user)
             if not permissions.manage_roles:
-                await interaction.response.send_message(f"there are {len(members)} members of {role.mention}, but only users with the manage_roles permission can list roles with more than 150 members")
+                await interaction.response.send_message(f"there are {len(members)} members of {role.mention}, but only users with the manage_roles permission can list roles with more than 150 members", allowed_mentions=allowedmentions)
                 return
 
         await interaction.response.defer() 
