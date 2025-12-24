@@ -47,35 +47,87 @@ class RoleUtil(commands.Cog):
             )
             stamp = ""
 
-    @app_commands.command(name="bulk_assign", description="add role X to all members of role Y")
+    @app_commands.command(
+        name="bulk_assign",
+        description="add role X to all members of role Y"
+    )
     @app_commands.default_permissions(manage_roles=True)
-    async def bulk_assign(self, interaction: discord.Interaction, x: discord.Role, y: discord.Role):
+    async def bulk_assign(
+        self,
+        interaction: discord.Interaction,
+        x: discord.Role,
+        y: discord.Role
+    ):
         target = y
         add = x
         guild = interaction.guild
 
-        response = f"adding role \"{add.name}\" to all members of role \"{target.name}\" (this might take a little while)"
-        await interaction.response.send_message(response)
-        message = await interaction.original_response()
 
-        members = target.members
+
+        response = (
+            f"adding role \"{add.name}\" to all members of role "
+            f"\"{target.name}\" (this might take a little while)"
+        )
+
+        await interaction.response.defer()
+        message = await interaction.followup.send(response)
+
+        members = [m for m in target.members if add not in m.roles]
+        total = len(members)
         added_count = 0
         errors = []
+
+        if add >= guild.me.top_role:
+            await message.edit(
+                content="i can’t assign that role because it’s above my highest role."
+            )
+            return
+
+        if add >= interaction.user.top_role:
+            await message.edit(
+                content="you can’t assign that role because it’s above your highest role."
+            )
+            return
+
         for member in members:
+            if add in member.roles:
+                continue # skip this guy
             try:
                 await member.add_roles(add)
                 added_count += 1
                 print(f"added role {add.name} to {member.name}")
-                await message.edit(content=f"{response} \nprogress: {added_count}/{len(members)}")
+
+                # only update every 5 
+                if added_count % 5 == 0 or added_count == total:
+                    await message.edit(
+                        content=(
+                            f"{response}\n"
+                            f"progress: {added_count}/{total}"
+                        )
+                    )
+
             except Exception as e:
                 error = f"error adding role to {member.name}: {e}"
                 print(error)
                 errors.append(error)
-                await interaction.followup.send(error)
+
         username = interaction.user.name
-        stamp = f"user {username} added role \"{add.name}\" to {added_count}/{len(members)} members of role \"{target.name}\""
+        stamp = (
+            f"user {username} added role \"{add.name}\" to "
+            f"{added_count}/{total} members of role \"{target.name}\""
+        )
         print(stamp)
-        await message.edit(content=stamp)
+
+        try:
+            await message.edit(content=stamp)
+        except discord.NotFound:
+            await interaction.channel.send(stamp)
+
+        if errors:
+            await interaction.followup.send(
+                f"{len(errors)} errors occurred. first error:\n{errors[0]}"
+            )
+
 
 async def setup(bot):
     await bot.add_cog(RoleUtil(bot))
