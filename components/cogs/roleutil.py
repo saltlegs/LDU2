@@ -79,13 +79,13 @@ class RoleUtil(commands.Cog):
 
         if add >= guild.me.top_role:
             await message.edit(
-                content="i can’t assign that role because it’s above my highest role."
+                content="i can't assign that role because it's above my highest role."
             )
             return
 
         if add >= interaction.user.top_role:
             await message.edit(
-                content="you can’t assign that role because it’s above your highest role."
+                content="you can't assign that role because it's above your highest role."
             )
             return
 
