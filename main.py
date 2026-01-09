@@ -13,7 +13,7 @@ log(f"================startup=====================")
 log(f"============================================")
 log(f"~1C-LDU ~2version {version} ~7starting up...")
 log("~1config, ~3levels ~7& ~5discord utility ~7bot")
-log("~1(c) 2025 lauren k ~7/ ~4hermod software")
+log("~1(c) 2025-2026 lauren k ~7/ ~4saltlegs.im")
 
 def log_all_commands():
     commands = bot.tree.get_commands()
