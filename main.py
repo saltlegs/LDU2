@@ -66,14 +66,13 @@ async def on_interaction(interaction: discord.Interaction):
 
         log(f"command /{command_name} used by {user} in {guild.name if guild else 'DMs'}")
 
+token = ""
 try:
     with open("token.txt", "r") as f:
         token = f.read().strip()
 except FileNotFoundError:
     with open("token.txt", "w") as f:
         f.write("")
-    log("~1please paste your bot token into token.txt in the same directory with main.py.")
-    sys.exit()
 
 if not token:
     log("~1please paste your bot token into token.txt in the same directory with main.py.")

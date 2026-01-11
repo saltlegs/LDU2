@@ -1,0 +1,3 @@
+joinmsg: "welcome, {mention}!"
+leavemsg: "{mention} left the server :("
+notifchannel: ~
