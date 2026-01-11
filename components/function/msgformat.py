@@ -25,9 +25,13 @@ def format_msg(message, guild: discord.Guild, member: discord.Member):
 
     new_message = new_message.replace("{mention}", mention)
     new_message = new_message.replace("{username}", username)
+    new_message = new_message.replace("{username_lower}", username.lower())
     new_message = new_message.replace("{displayname}", displayname)
+    new_message = new_message.replace("{displayname_lower}", displayname.lower())
     new_message = new_message.replace("{guildname}", guildname)
+    new_message = new_message.replace("{guildname_lower}", guildname.lower())
     new_message = new_message.replace("{servername}", guildname)
+    new_message = new_message.replace("{servername_lower}", guildname.lower())
     new_message = new_message.replace("{br}", br)
 
     return new_message
