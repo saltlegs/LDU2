@@ -65,20 +65,30 @@ class MessageListener(commands.Cog):
             log(f"admin exec seen: {message.content}")
             command = message.content.lstrip("~> ")
             namespace = self.namespace
+            import inspect
+            import io
             try:
                 code = compile(command, "<string>", "eval")
                 result = eval(code, namespace)
+                if inspect.isawaitable(result):
+                    result = await result
                 output = f"`{result}`"
             except SyntaxError:
-                code = compile(command, "<string>", "exec")
-                exec(code, namespace)
-                output = namespace.get("result", "(no output)")
+                exec_code = f"async def __exec_fn__():\n"
+                for line in command.split('\n'):
+                    exec_code += f"    {line}\n"
+                exec(exec_code, namespace)
+                try:
+                    result = await namespace["__exec_fn__"]()
+                except Exception as e:
+                    output = f"error: `{e}`"
+                else:
+                    output = result if result is not None else namespace.get("result", "(no output)")
             except Exception as e:
                 output = f"error: `{e}`"
             if isinstance(output, str) and len(output) >= 4000:
-                import io
                 file = discord.File(io.StringIO(str(output)), filename="output.txt")
-                await message.reply(content="Output too long, sent as file:", file=file)
+                await message.reply(file=file)
                 log("responded: [output as file]")
             else:
                 await message.reply(output)
