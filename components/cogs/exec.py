@@ -82,18 +82,21 @@ class MessageListener(commands.Cog):
                 
             except SyntaxError:
                 exec_code = "async def __exec_fn__():\n"
+                exec_code += "    global result\n"
                 for line in command.split('\n'):
                     exec_code += f"    {line}\n"
+                exec_code += "    return locals()\n"
                 
                 try:
                     exec(exec_code, namespace, namespace)
-                    result = await namespace["__exec_fn__"]()
-                    output = f"`{result}`" if result is not None else namespace.get("result", "(no output)")
+                    local_vars = await namespace["__exec_fn__"]()
+                    for key, value in local_vars.items():
+                        if not key.startswith('_'):
+                            namespace[key] = value
+                    result = local_vars.get('result')
+                    output = f"`{result}`" if result is not None else "(no output)"
                 except Exception as e:
                     output = f"error: `{e}`"
-                    
-            except Exception as e:
-                output = f"error: `{e}`"
             
             if isinstance(output, str) and len(output) >= 2000:
                 file = discord.File(io.StringIO(output), filename="output.txt")
