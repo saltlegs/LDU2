@@ -75,8 +75,14 @@ class MessageListener(commands.Cog):
                 output = namespace.get("result", "(no output)")
             except Exception as e:
                 output = f"error: `{e}`"
-            await message.reply(output)
-            log(f"responded: {output}")
+            if isinstance(output, str) and len(output) >= 4000:
+                import io
+                file = discord.File(io.StringIO(str(output)), filename="output.txt")
+                await message.reply(content="Output too long, sent as file:", file=file)
+                log("responded: [output as file]")
+            else:
+                await message.reply(output)
+                log(f"responded: {output}")
 
         
 
