@@ -69,7 +69,7 @@ class MessageListener(commands.Cog):
             import io
             try:
                 code = compile(command, "<string>", "eval")
-                result = eval(code, namespace)
+                result = eval(code, namespace, namespace)
                 if inspect.isawaitable(result):
                     result = await result
                 output = f"`{result}`"
@@ -77,7 +77,7 @@ class MessageListener(commands.Cog):
                 exec_code = f"async def __exec_fn__():\n"
                 for line in command.split('\n'):
                     exec_code += f"    {line}\n"
-                exec(exec_code, namespace)
+                exec(exec_code, namespace, namespace)
                 try:
                     result = await namespace["__exec_fn__"]()
                 except Exception as e:
