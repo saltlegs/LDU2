@@ -34,7 +34,6 @@ yaml.SafeDumper.add_representer(tuple, tuple_representer)
 
 def register_config(label: str):
     COG_LABELS.append(label)    
-    log(f"~2registered config {label}")
 
 def get_default_config(config_name: str):
     if not config_name in COG_LABELS:
@@ -76,7 +75,6 @@ class ConfigHandler:
             colour = config["colour"]
             if isinstance(colour, list) and len(colour) == 3:
                 config["colour"] = tuple(colour)
-        log(f"~2loaded levels config for {self.guild_name}")
         self.default_config = default_config
         self.config = config
 

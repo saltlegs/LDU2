@@ -16,13 +16,11 @@ import components.function.levels.image_generation as lvimg
 recent_speakers = {}
 
 async def save_points_regular(interval=15):
-    log(f"~2autosave coroutine started, interval: {interval}s")
     while True:
         await asyncio.sleep(interval)
         for guild_id, data in POINTS_DATABASE.items():
             if data:
                 set_guild_attribute(guild_id, "points_data", data)
-        #log(f"~2saved points data for {len(POINTS_DATABASE)} guilds")
 
 
 
@@ -41,12 +39,8 @@ class Levels(commands.Cog):
 
     async def _background_startup(self):
         await self.bot.wait_until_ready()
-        log("~4levels cog background startup")
         if not self.autosave_task or self.autosave_task.done():
-            log("~2starting points data autosave task (background task)")
             self.autosave_task = self.bot.loop.create_task(save_points_regular(15))
-        else:
-            log("~3autosave task already running (background task)")
 
     def generate_handlers(self):
         self.confighandlers = {}
@@ -63,7 +57,6 @@ class Levels(commands.Cog):
             if data is None:
                 data = {}
             POINTS_DATABASE[guild.id] = data
-            log(f"~2loaded points data for {guild.name}")
 
 
     @commands.Cog.listener()
