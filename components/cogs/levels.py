@@ -102,9 +102,36 @@ class Levels(commands.Cog):
         points_range = confighandler.get_attribute("points_range", fallback=(1, 5))
         points_range = tuple(points_range)
 
+        # calculate the amount of xp to granted without bonuses
+
+        lo, hi = points_range
+        amount_to_increase = random.randint(lo, hi)
+
+        # calculate long message bonus
+
+        LONG_MESSAGE_LENGTH = 120
+
+        if len(message.content) > LONG_MESSAGE_LENGTH:
+            bonus = 0
+            for i in range((len(message.content) // LONG_MESSAGE_LENGTH) - 1):
+                bonus += random.randint(lo, hi)
+                
+            # log(f"~2long message bonus: {bonus}")
+            amount_to_increase += bonus
+
+        # calculate attachment bonus
+
+        ATTACHMENT_BONUS_MULTIPLIER = 1.5
+
+        if message.attachments:
+            bonus = round(random.randint(lo, hi) * ATTACHMENT_BONUS_MULTIPLIER)
+
+            amount_to_increase += bonus
+            # log(f"~2attachment bonus: {bonus}")
+
         # increment the points and check if a new role needs to be given
 
-        new_points, has_levelled_up = lvbsc.increment_user_points(guild=message.guild, user=message.author, amount=points_range, confighandler=confighandler)
+        new_points, has_levelled_up = lvbsc.increment_user_points(guild=message.guild, user=message.author, amount=amount_to_increase, confighandler=confighandler)
         new_level, _ = lvbsc.points_to_level(new_points, confighandler)
 
         if has_levelled_up:
