@@ -372,7 +372,7 @@ class Levels(commands.Cog):
             return
 
     @discord.app_commands.default_permissions(manage_roles=True)
-    @discord.app_commands.command(name="set_xp_range", description="set a role to be given on level up")
+    @discord.app_commands.command(name="set_xp_range", description="set a range for xp granted on message")
     async def set_xp_range(self, interaction: discord.Interaction, min:int, max:int):
         confighandler = self.confighandlers.get(interaction.guild.id, None)
         if confighandler is None:
