@@ -41,6 +41,7 @@ FONT_TYPE = ".otf"
 
 BIGNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 100)
 MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 86)
+SMALLNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 65)
 TITLE = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 105)
 BODY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 72)
 BODY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", 42)

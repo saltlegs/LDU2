@@ -88,12 +88,13 @@ def generate_progress_circle(entry, lb_index, theme):
         # get the text colour for requested theme
 
     chars = len(str(entry[3])) # level (4th element)
+    log(f"debug: {chars}")
     if chars == 1:
         font = C.BIGNUMBER
     elif chars == 2:
         font = C.MEDNUMBER
     elif chars > 2:
-        font = C.TITLE
+        font = C.SMALLNUMBER
     # the font size should respect the width of the circle
     # hope and pray to god that nobody ever gets a 4 digit level
 
