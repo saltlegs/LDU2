@@ -14,8 +14,11 @@ def points_to_level(points: int, confighandler: ConfigHandler) -> tuple[int, int
     "returns level, remaining points to next level"
 
     k = confighandler.get_attribute("k", fallback=K_FALLBACK)
+    k = K_FALLBACK if k == 0 else k
 
-    level = int(math.sqrt(points) / k)
+    points_negative = points < 0
+    level = int(math.sqrt(abs(points)) / k)
+    level = -level if points_negative else level
 
     xp_current = (level * k) ** 2       # total xp required to reach current level
     xp_next = ((level + 1) * k) ** 2    #  total xp required to reach next level
