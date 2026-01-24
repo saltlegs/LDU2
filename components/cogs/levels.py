@@ -87,16 +87,6 @@ class Levels(commands.Cog):
             log(f"~1ignoring message by {message.author.name} in disabled channel {message.channel.name} of guild {message.guild.name}")
             return
 
-        # check if the user has sent a message within the cooldown
-
-        timestamp = time.time()
-        cooldown = confighandler.get_attribute("message_cooldown", fallback=30)
-
-        last_spoke = recent_speakers.get(message.author.id)
-        if last_spoke is not None and timestamp - last_spoke < cooldown:
-            return
-        recent_speakers[message.author.id] = timestamp
-
         # get the points range from the guild's config
 
         points_range = confighandler.get_attribute("points_range", fallback=(1, 5))
@@ -128,6 +118,26 @@ class Levels(commands.Cog):
 
             amount_to_increase += bonus
             # log(f"~2attachment bonus: {bonus}")
+
+        # check if the user has sent a message within the cooldown
+
+        timestamp = time.time()
+        cooldown = confighandler.get_attribute("message_cooldown", fallback=30)
+
+        last_entry = recent_speakers.get(message.author.id)
+        last_spoke, last_points = last_entry if last_entry else (None, None)
+        
+        if last_spoke and timestamp - last_spoke < cooldown:
+            if last_points < amount_to_increase: # if the message is bigger than last then grant the difference in points
+                amount_to_increase -= last_points
+                amount_to_increase = max(amount_to_increase, 0) # dont deduct
+                
+                recent_speakers[message.author.id] = (last_spoke, last_points + amount_to_increase)
+                
+            else: # if the message isn't bigger then just ignore it
+                return
+        else:
+            recent_speakers[message.author.id] = (timestamp, amount_to_increase)
 
         # increment the points and check if a new role needs to be given
 
