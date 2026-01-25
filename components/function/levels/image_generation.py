@@ -1,4 +1,4 @@
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFont, ImageChops
 import math
 import pathlib
 import random
@@ -276,16 +276,22 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
             C.LB_ICON_RADIUS,
             C.LB_ICON_RADIUS),
             resample=Image.LANCZOS
-        )
+        ).convert("RGBA")
 
-        mask = Image.new("L", (C.LB_ICON_RADIUS, C.LB_ICON_RADIUS), 0)
+        # create rounded rect mask for the outer shape
+        rounded_mask = Image.new("L", (C.LB_ICON_RADIUS, C.LB_ICON_RADIUS), 0)
         rounded_rect(
-            draw=ImageDraw.Draw(mask),
+            draw=ImageDraw.Draw(rounded_mask),
             box=(0, 0, C.LB_ICON_RADIUS, C.LB_ICON_RADIUS),
             radius=20,
             fill=255
         )
-        surface.paste(icon, (C.LB_TITLE_PADDING_L//2, C.LB_TITLE_PADDING_U//2), mask)
+
+        # combine the icon's own alpha with the rounded mask so both transparency and the rounded corners are respected when pasting
+        icon_alpha = icon.split()[3]
+        combined_mask = ImageChops.multiply(icon_alpha, rounded_mask)
+
+        surface.paste(icon, (C.LB_TITLE_PADDING_L//2, C.LB_TITLE_PADDING_U//2), combined_mask)
 
     title_text = guild_name
     title_font = C.TITLE

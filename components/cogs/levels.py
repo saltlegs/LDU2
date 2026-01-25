@@ -15,7 +15,7 @@ import components.function.levels.image_generation as lvimg
 
 recent_speakers = {}
 
-async def save_points_regular(interval=15):
+async def save_points_regular(interval=5):
     while True:
         await asyncio.sleep(interval)
         for guild_id, data in POINTS_DATABASE.items():
@@ -40,7 +40,7 @@ class Levels(commands.Cog):
     async def _background_startup(self):
         await self.bot.wait_until_ready()
         if not self.autosave_task or self.autosave_task.done():
-            self.autosave_task = self.bot.loop.create_task(save_points_regular(15))
+            self.autosave_task = self.bot.loop.create_task(save_points_regular())
 
     def generate_handlers(self):
         self.confighandlers = {}
@@ -250,6 +250,36 @@ class Levels(commands.Cog):
             await self.level_up(new_level, user, interaction.guild, confighandler)
 
         await interaction.response.send_message(f"added {amount} points to {user.mention}", allowed_mentions=discord.AllowedMentions.none())
+
+    @discord.app_commands.default_permissions(manage_roles=True)
+    @discord.app_commands.command(name="set_points", description="set points for a user")
+    async def set_points(self, interaction: discord.Interaction, user: discord.User, amount: int):
+        confighandler = self.confighandlers.get(interaction.guild.id, None)
+        if confighandler is None:
+            log(f"~1set_points: could not find config handler for guild {interaction.guild.name}")
+            return
+        guild_id = interaction.guild.id
+        user_id = user.id
+
+        # make sure guild entry actually exists
+        if guild_id not in POINTS_DATABASE:
+            POINTS_DATABASE[guild_id] = {}
+
+        user_points_before = POINTS_DATABASE[guild_id].get(user_id, 0)
+        user_level_before, _ = lvbsc.points_to_level(user_points_before, confighandler)
+
+        # set the new absolute points
+        POINTS_DATABASE[guild_id][user_id] = int(amount)
+        new_points = POINTS_DATABASE[guild_id][user_id]
+
+        user_level_after, _ = lvbsc.points_to_level(new_points, confighandler)
+        has_levelled_up = user_level_after > user_level_before
+
+        if has_levelled_up:
+            await self.level_up(user_level_after, user, interaction.guild, confighandler)
+
+        await interaction.response.send_message(f"set {user.mention}'s points to {amount}", allowed_mentions=discord.AllowedMentions.none())
+
 
     @discord.app_commands.command(name="shut_up", description="toggle levelup/roleup pings/dms")
     async def shut_up(self, interaction: discord.Interaction):
