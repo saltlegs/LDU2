@@ -77,7 +77,7 @@ class Levels(commands.Cog):
         disabled_cogs = get_guild_attribute(message.guild, "disabled_cogs")
         if not disabled_cogs:
             disabled_cogs = []
-        if "Levels" in get_guild_attribute(message.guild, "disabled_cogs"):
+        if "Levels" in disabled_cogs:
             return
 
         if message.author.bot or message.guild is None:
