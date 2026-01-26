@@ -74,7 +74,7 @@ class Levels(commands.Cog):
 
         # validation
 
-        disabled_cogs = get_guild_attribute(message.guild, "disabled_cogs")
+        disabled_cogs = get_guild_attribute(message.guild.id, "disabled_cogs")
         if not disabled_cogs:
             disabled_cogs = []
         if "Levels" in disabled_cogs:
