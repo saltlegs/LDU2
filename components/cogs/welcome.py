@@ -7,7 +7,7 @@ from components.function.msgformat import format_msg
 from components.classes.confighandler import ConfigHandler, register_config
 
 
-class WelcomeCog(commands.Cog): 
+class Welcome(commands.Cog): 
 
     def __init__(self, bot: commands.Bot):
         self.bot = bot
@@ -193,4 +193,4 @@ class WelcomeCog(commands.Cog):
 
 
 async def setup(bot: commands.Bot):
-    await bot.add_cog(WelcomeCog(bot))
+    await bot.add_cog(Welcome(bot))

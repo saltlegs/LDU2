@@ -4,7 +4,7 @@ from discord import app_commands
 
 # code originates from ldu 1, only slightly modified for ldu 2
 
-class RoleUtil(commands.Cog):
+class RoleUtilities(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
 
@@ -130,4 +130,4 @@ class RoleUtil(commands.Cog):
 
 
 async def setup(bot):
-    await bot.add_cog(RoleUtil(bot))
+    await bot.add_cog(RoleUtilities(bot))

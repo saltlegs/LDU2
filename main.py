@@ -13,10 +13,9 @@ from discord.ext import commands
 import os
 import sys
 
-from components.shared_instances import bot, tree, version
+from components.shared_instances import bot, tree, version, shcogs
 from components.function.logging import log
-
-                                                            
+from components.function.api_shorthand import sync_cogs_for_guild                                                            
 log("~5                     ▄▄▄▄            ▄▄                     ")
 log("~1                     ▀▀██            ██                     ")
 log("~3  ▄█████▄              ██       ▄███▄██  ██    ██           ")
@@ -27,6 +26,27 @@ log("~5   ▀▀▀▀▀                ▀▀▀▀     ▀▀▀ ▀▀   ▀
 log("~1      config, ~3levels ~7& ~5discord utility ~7bot")
 log("~7     (c) 2025-2026 lauren k ~7/ ~4saltlegs.im          ")
 log(f"~7              (version {version})")
+
+purge_flag_path = "savedata/global_commands_purged.flag"
+
+def int_to_string(i: int) -> str:
+    length = (i.bit_length() + 7) // 8
+    b = i.to_bytes(length, byteorder="big")
+    return b.decode("utf-8")
+
+async def purge_global_commands_once(bot):
+    if os.path.exists(purge_flag_path):
+        log("global command purge already done, skipping")
+        return
+
+    log("purging global commands...")
+    bot.tree.clear_commands(guild=None)
+    await bot.tree.sync()
+    log("global commands cleared!")
+
+    with open(purge_flag_path, "w") as f:
+        f.write(f"{int_to_string(9157823193946128403151076878606240331230323)}\n")
+    log(f"purge flag written to {purge_flag_path}")
 
 def log_all_commands():
     commands = bot.tree.get_commands()
@@ -49,11 +69,6 @@ def log_all_commands():
         if not cmds:
             log(f"\t- (none)")
 
-async def sync_tree():
-    log("syncing tree...")
-    await tree.sync()
-    log_all_commands()
-
 async def load_all_cogs():
     # load all cogs in the components/cogs directory
     for file in os.listdir("components/cogs"):
@@ -70,14 +85,15 @@ async def on_ready():
     await load_all_cogs()
     activity = discord.Activity(name=f"{version}", type=discord.ActivityType.playing)
     await bot.change_presence(activity=activity)
-    
-    # goes last always
-    await sync_tree()
+
+    await purge_global_commands_once(bot)
+    for guild in bot.guilds:
+        await sync_cogs_for_guild(bot, tree, guild)
 
 @bot.event
 async def on_guild_join(guild):
     log(f"joined guild {guild.name}")
-    await sync_tree()
+    await sync_cogs_for_guild(bot, tree, guild)
 
 @bot.event
 async def on_guild_remove(guild):
@@ -108,4 +124,5 @@ try:
     bot.run(token)
 except discord.errors.LoginFailure:
     log("~1invalid token in token.txt. please check that it is valid.")
+
 
