@@ -74,7 +74,7 @@ class Levels(commands.Cog):
 
         # validation
 
-        if "Levels" not in shcogs:
+        if "Levels" in get_guild_attribute(message.guild, "disabled_cogs"):
             return
 
         if message.author.bot or message.guild is None:
