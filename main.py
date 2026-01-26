@@ -87,6 +87,7 @@ async def on_ready():
     await bot.change_presence(activity=activity)
 
     await purge_global_commands_once(bot)
+    shcogs[:] = list(bot.cogs.keys())
     for guild in bot.guilds:
         await sync_cogs_for_guild(bot, tree, guild)
 

@@ -17,7 +17,7 @@ intents.dm_messages = True
 
 bot = commands.Bot(intents=intents, command_prefix='drigoydgjamdiuhfnsgihfjsfthsft')
 # idiot prefix that i can't turn off so i made it very long such that nobody will ever trigger it
-shcogs = list(bot.cogs.keys())
+shcogs = []
 
 tree = bot.tree
 
