@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from components.function.logging import log
 from components.function.savedata import set_guild_attribute, get_guild_attribute, get_guild_member_attribute, set_guild_member_attribute
 from components.classes.confighandler import ConfigHandler, register_config
-from components.shared_instances import POINTS_DATABASE, DEVTAG
+from components.shared_instances import POINTS_DATABASE, DEVTAG, shcogs
 import components.function.levels.basic as lvbsc
 import components.function.levels.image_generation as lvimg
 
@@ -73,6 +73,9 @@ class Levels(commands.Cog):
     async def on_message(self, message: discord.Message):
 
         # validation
+
+        if "Levels" not in shcogs:
+            return
 
         if message.author.bot or message.guild is None:
             return
