@@ -52,7 +52,7 @@ class ConfigHandlerCommands(commands.Cog):
         await sync_cogs_for_guild(interaction.client, interaction.client.tree, interaction.guild)
         log(f"{action} {module} module for server {interaction.guild.name}")
 
-        await msg.reply(
+        await msg.edit(
             f"{module} module has been {action}! the change may not show up visually until discord is restarted (ctrl+r/⌘+r on desktop, close & open the app on mobile)."
         )
 
