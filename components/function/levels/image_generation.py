@@ -88,7 +88,6 @@ def generate_progress_circle(entry, lb_index, theme):
         # get the text colour for requested theme
 
     chars = len(str(entry[3])) # level (4th element)
-    log(f"debug: {chars}")
     if chars == 1:
         font = C.BIGNUMBER
     elif chars == 2:
