@@ -61,6 +61,6 @@ def log(message):
         except UnicodeEncodeError:
             sys.stdout.buffer.write(out.encode("utf-8", errors="replace"))
             sys.stdout.buffer.flush()
-    logged_amount += 1 
+    logged_amount += 1
 
     
