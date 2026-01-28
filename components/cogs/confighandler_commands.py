@@ -18,7 +18,7 @@ class ConfigHandlerCommands(commands.Cog):
         self.bot = bot
 
     @app_commands.command(name="toggle_module")
-    @app_commands.checks.has_permissions(administrator=True)
+    @discord.app_commands.default_permissions(administrator=True)
     @app_commands.describe(
         module="name of the module to toggle (enable/disable)"
     )
