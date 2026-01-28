@@ -1,4 +1,6 @@
 import datetime
+import sys
+import os
 from pathlib import Path
 
 from components.shared_instances import logged_amount
@@ -46,10 +48,19 @@ def log(message):
 
 
     file_timestamp.touch()
-    with file_timestamp.open("a") as f:
+    with file_timestamp.open("a", encoding="utf-8") as f:
         f.write(f"[{timestamp}] {new_message_plain}\n")
 
-    print(f"{COLOURS[reset_colour]}[{timestamp}] {new_message}{COLOURS[reset_colour]}")
+    out = f"{COLOURS[reset_colour]}[{timestamp}] {new_message}{COLOURS[reset_colour]}\n"
+    try:
+        sys.stdout.buffer.write(out.encode("utf-8"))
+        sys.stdout.buffer.flush()
+    except Exception:
+        try:
+            print(out, end="")
+        except UnicodeEncodeError:
+            sys.stdout.buffer.write(out.encode("utf-8", errors="replace"))
+            sys.stdout.buffer.flush()
     logged_amount += 1
 
     
