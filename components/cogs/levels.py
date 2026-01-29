@@ -73,14 +73,13 @@ class Levels(commands.Cog):
     async def on_message(self, message: discord.Message):
 
         # validation
-
+        if message.author.bot or message.guild is None:
+            return
+        
         disabled_cogs = get_guild_attribute(message.guild.id, "disabled_cogs")
         if not disabled_cogs:
             disabled_cogs = []
         if "Levels" in disabled_cogs:
-            return
-
-        if message.author.bot or message.guild is None:
             return
         
         confighandler = self.confighandlers.get(message.guild.id, None)
