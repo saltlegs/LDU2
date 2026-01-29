@@ -95,6 +95,7 @@ async def on_ready():
 async def on_guild_join(guild):
     log(f"joined guild {guild.name}")
     await sync_cogs_for_guild(bot, tree, guild)
+    await guild.owner.send(f"thank you for inviting LDU to {guild.name}!\n\nmake sure to have a look at the documentation here: https://www.saltlegs.im/ldu/lduhelp.html\n\nif you need any assistance or have a suggestion, feel free to reach out on our support server: https://discord.gg/hTNWJnmuDK")
 
 @bot.event
 async def on_guild_remove(guild):
