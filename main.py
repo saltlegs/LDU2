@@ -80,8 +80,9 @@ async def load_all_cogs():
 async def on_ready():
     guilds_text = "guilds" if len(bot.guilds) != 1 else "guild"
     log(f"connected to {len(bot.guilds)} {guilds_text}:")
-    for guild in bot.guilds:
-        log(f"\t- {guild.name:<32} | {guild.owner.name:^32} | {guild.member_count:>6} members")
+    for guild in sorted(bot.guilds, key=lambda g: g.member_count, reverse=True):
+        owner_name = guild.owner.name if guild.owner else "unknown"
+        log(f"\t- {guild.name.strip():<32} | {owner_name:^32} | {guild.member_count:>6} members")
     await load_all_cogs()
     activity = discord.Activity(name=f"{version}", type=discord.ActivityType.playing)
     await bot.change_presence(activity=activity)
