@@ -16,9 +16,9 @@ import discord
 def format_msg(message, guild: discord.Guild, member: discord.Member):
 
     mention = member.mention
-    username = member.name.replace("_", "\_")
-    displayname = member.display_name.replace("_", "\_")
-    guildname = guild.name.replace("_", "\_")
+    username = member.name.replace("_", "\\_")
+    displayname = member.display_name.replace("_", "\\_")
+    guildname = guild.name.replace("_", "\\_")
     br = "\n"
 
     new_message = str(message)
