@@ -90,7 +90,7 @@ async def on_ready():
     await purge_global_commands_once(bot)
     shcogs[:] = list(bot.cogs.keys())
     for guild in bot.guilds:
-        await sync_cogs_for_guild(bot, tree, guild)
+        await sync_cogs_for_guild(bot, tree, guild) 
 
 @bot.event
 async def on_guild_join(guild):
