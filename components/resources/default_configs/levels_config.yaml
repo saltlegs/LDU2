@@ -5,7 +5,6 @@ points_range:
   - 5
 message_cooldown: 30
 alert_channel: ~ # will alert in DM by default but can be set to a channel ID
-125_level_system_msg_flag: true
 keys:
   levelup_message: "you have leveled up to level {level}!"
   levelup_message_dm: "you have leveled up to level {level} in {guild}!"

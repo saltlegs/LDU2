@@ -4,6 +4,7 @@ from discord import app_commands
 
 from components.function.logging import log
 from components.function.msgformat import format_msg
+from components.function.moderation.basic import InfractionTypes, add_infraction
 from components.classes.confighandler import ConfigHandler, register_config
 
 
