@@ -35,31 +35,53 @@ def gen_case(
 
     return new_id, new_case
 
-def get_case_embed(
+async def try_get_mention(bot: commands.Bot, uid:int):
+    user = bot.get_user(uid)
+    try:
+        if user is None: user = await bot.fetch_user(uid)
+    except discord.NotFound:
+        return "unknown user"
+    return user.mention
+
+async def try_get_avatar_url(bot: commands.Bot, uid:int):
+    user = bot.get_user(uid)
+    try:
+        if user is None: user = await bot.fetch_user(uid)
+    except:
+        return bot.user.avatar.url
+    return user.avatar.url
+    
+
+async def get_case_embed(
     bot: commands.Bot,
     channel: discord.channel,
     case_id:int,
     case:dict,
 ):
-    case_type = case["type"]
-    case_time = case["time"]
-    case_end  = case["end"]
-    case_note = case["note"]
+    case_time       = case.get("time")
+    case_end        = case.get("end")
+    case_type       = case.get("type")
+    case_target_id  = case.get("target")
+    case_author_id  = case.get("author")
+    case_note       = case.get("note")
+
     if case_end is not None: case_duration = case_end - case_time
     else: case_duration = None
-    case_target = bot.get_user(case["target"])
-    case_target_avatar = case_target.avatar
-    case_target_avatar = case_target_avatar.url if case_target_avatar is not None else bot.user.avatar.url
-    case_author = bot.get_user(case["author"])
 
+    case_target_mention = try_get_mention(bot, case_target_id)
+    case_target_avatar = try_get_avatar_url(bot, case_target_id)
+
+    case_author_mention = try_get_mention(bot, case_author_id)
+    case_author_avatar = try_get_avatar_url(bot, case_author_id)
+    #i forgot i didnt need the avatar but it's abstracted anyway
 
     embed = discord.Embed(
         title = f"case {case_id}: {case_type}",
         color = discord.Colour.dark_red,
-        timestamp = datetime.datetime.now
+        timestamp = datetime.datetime.now()
     )
-    embed.add_field(name="user", value=case_target.mention)
-    embed.add_field(name="moderator", value=case_author.mention)
+    embed.add_field(name="user", value=case_target_mention)
+    embed.add_field(name="moderator", value=case_author_mention)
     embed.add_field(name="comment", value=case_note)
     embed.set_image(url=case_target_avatar)
 
@@ -70,32 +92,49 @@ def get_case_embed(
     return embed
 
 def get_duration_string(seconds: int) -> str:
-    if seconds < 60:
-        return f"{seconds} second{'s' if seconds != 1 else ''}"
+    def pluralise(name:str, value:int): return f"{value} {name}{'s' if value != 1 else ''}"
+    INTERVALS = (
+        ("year",    31536000, 1),   # defined as 365 days exactly
+        ("month",   2592000, 3),    # defined as 30 days exactly
+        ("week",    604800, 2),
+        ("day",     86400, 2),
+        ("hour",    3600, 1),
+        ("minute",  60, 1),
+        ("second",  1, 1)
+    )
 
-    minutes = seconds // 60
-    if minutes < 60:
-        return f"{minutes} minute{'s' if minutes != 1 else ''}"
+    duration_string = []
+    seconds = abs(seconds)
 
-    hours = minutes // 60
-    if hours < 24:
-        return f"{hours} hour{'s' if hours != 1 else ''}"
+    for noun, interval_seconds, minimum_to_display in INTERVALS:
+        whole_unit = seconds // interval_seconds
+        if whole_unit < minimum_to_display: continue
 
-    days = hours // 24
-    return f"{days} day{'s' if days != 1 else ''}"
+        seconds = seconds % interval_seconds
+        if whole_unit != 0: duration_string.append(pluralise(noun, whole_unit))
+        if seconds == 0: return ', '.join(duration_string)
+
+    return "0 seconds"
 
 def str_to_seconds(string:str):
-    def minutes_to_seconds(minutes:int): return minutes * 60
-    def hours_to_seconds(hours:int):     return hours * 3600
-    def days_to_seconds(days:int):       return days * 86400
     def bad_time_unit_error(): raise ValueError(f"invalid time unit in string {string} should resemble 1d5h, 1h30m, etc. valid time units: s, m, h, d")
     def no_time_components_error(): raise ValueError(f"no valid time components in string {string}. should resemble 1d5h, 1h30m, etc")
+
+    INTERVALS = {
+        "y":   31536000,    # defined as 365 days exactly
+                            # NO MONTHS conflicts with minutes and also sucks
+        "w":   604800,
+        "d":   86400,
+        "h":   3600,
+        "m":   60,
+        "s":   1
+    }
 
     components = []
     component = []
 
     for char in string:
-        if char == " ":
+        if char in " ,.;:-_/&+":
             continue
         elif char in "0123456789":
             component.append(char)
@@ -112,10 +151,10 @@ def str_to_seconds(string:str):
         unit = component[-1]
         if component[:-1] == "": bad_time_unit_error()
         amount = int(component[:-1])
-        if unit   == "s":   seconds += amount
-        elif unit == "m":   seconds += minutes_to_seconds(amount)
-        elif unit == "h":   seconds += hours_to_seconds(amount)
-        elif unit == "d":   seconds += days_to_seconds(amount)
-        else: bad_time_unit_error()
+
+        interval = INTERVALS.get(unit)
+        if interval is None: bad_time_unit_error()
+
+        seconds += amount * interval
     return seconds
 
