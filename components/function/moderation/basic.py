@@ -52,6 +52,14 @@ async def try_get_avatar_url(bot: commands.Bot, uid:int):
         return bot.user.avatar.url
     return user.avatar.url if user.avatar else bot.user.avatar.url
 
+def make_simple_embed(string, desc=None):
+    embed = discord.Embed(
+        title=string
+    )
+    if desc:
+        embed.description=desc
+    return embed
+
 async def get_case_embed(
     bot: commands.Bot,
     case_id:int,
@@ -66,6 +74,7 @@ async def get_case_embed(
 
     if case_end is not None: case_duration = case_end - case_time
     else: case_duration = None
+    if case_duration < 0: case_duration = None
 
     case_target_mention = await try_get_mention(bot, case_target_id)
     case_target_avatar = await try_get_avatar_url(bot, case_target_id)
