@@ -4,7 +4,7 @@ from discord import app_commands
 
 from components.function.logging import log
 from components.function.msgformat import format_msg
-from components.function.moderation.basic import InfractionTypes, add_infraction
+from components.function.moderation.basic import gen_case, get_case_embed
 from components.classes.confighandler import ConfigHandler, register_config
 
 
@@ -41,7 +41,20 @@ class ModerationBeta(commands.Cog):
     async def infraction(self, interaction: discord.Interaction):
         config = self.get_config(interaction.guild.id)
 
-        interaction.response.send_message("test")
+        await interaction.response.defer()
+
+        this_case_id, this_case = gen_case(
+            confighandler=config,
+            case_type="note",
+            case_target=interaction.user,
+            case_author=self.bot.user,
+            case_note="this is the test infraction",
+            case_duration_seconds=600,
+        )
+
+        embed = await get_case_embed(self.bot, this_case_id, this_case)
+
+        await interaction.followup.send(embed=embed)
 
 
 async def setup(bot: commands.Bot):

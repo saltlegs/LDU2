@@ -3,16 +3,17 @@ import datetime
 import discord
 from discord.ext import commands
 
+from components.function.logging import log
 from components.classes.confighandler import ConfigHandler
 
 def gen_case(
     confighandler:ConfigHandler,
     case_type:str,
-    case_target:int,
-    case_author:int,
+    case_target:discord.User,
+    case_author:discord.User,
     case_duration_seconds:int=-1,
     case_note:str="no note added",
-) -> int:
+) -> tuple[int, dict]:
     cases:dict = confighandler.get_attribute("cases", fallback={})
     last_id:int = confighandler.get_attribute("last_id", fallback=-1)
 
@@ -23,8 +24,8 @@ def gen_case(
         "time": case_timestamp,
         "end": case_end_time,
         "type": case_type,
-        "target": case_target,
-        "author": case_author,
+        "target": case_target.id,
+        "author": case_author.id,
         "note": case_note
     }
     new_id = last_id + 1
@@ -49,12 +50,10 @@ async def try_get_avatar_url(bot: commands.Bot, uid:int):
         if user is None: user = await bot.fetch_user(uid)
     except:
         return bot.user.avatar.url
-    return user.avatar.url
-    
+    return user.avatar.url if user.avatar else bot.user.avatar.url
 
 async def get_case_embed(
     bot: commands.Bot,
-    channel: discord.channel,
     case_id:int,
     case:dict,
 ):
@@ -68,26 +67,25 @@ async def get_case_embed(
     if case_end is not None: case_duration = case_end - case_time
     else: case_duration = None
 
-    case_target_mention = try_get_mention(bot, case_target_id)
-    case_target_avatar = try_get_avatar_url(bot, case_target_id)
+    case_target_mention = await try_get_mention(bot, case_target_id)
+    case_target_avatar = await try_get_avatar_url(bot, case_target_id)
 
-    case_author_mention = try_get_mention(bot, case_author_id)
-    case_author_avatar = try_get_avatar_url(bot, case_author_id)
-    #i forgot i didnt need the avatar but it's abstracted anyway
+    case_author_mention = await try_get_mention(bot, case_author_id)
+    case_author_avatar = await try_get_avatar_url(bot, case_author_id)
 
     embed = discord.Embed(
-        title = f"case {case_id}: {case_type}",
-        color = discord.Colour.dark_red,
+        color = discord.Colour.dark_red(),
         timestamp = datetime.datetime.now()
     )
     embed.add_field(name="user", value=case_target_mention)
     embed.add_field(name="moderator", value=case_author_mention)
-    embed.add_field(name="comment", value=case_note)
-    embed.set_image(url=case_target_avatar)
 
     if case_duration is not None:
         duration = get_duration_string(case_duration)
         embed.add_field(name="duration", value=duration)
+
+    embed.add_field(name="comment", value=case_note)
+    embed.set_author(name=f"case {case_id}: {case_type}", icon_url=case_author_avatar)
 
     return embed
 
@@ -104,7 +102,7 @@ def get_duration_string(seconds: int) -> str:
     )
 
     duration_string = []
-    seconds = abs(seconds)
+    seconds = int(abs(seconds))
 
     for noun, interval_seconds, minimum_to_display in INTERVALS:
         whole_unit = seconds // interval_seconds
