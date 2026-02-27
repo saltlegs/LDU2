@@ -10,8 +10,11 @@ logging.getLogger("discord.client").setLevel(logging.ERROR)
 
 import discord
 from discord.ext import commands
+import asyncio
 import os
 import sys
+import shutil
+from datetime import datetime
 
 from components.shared_instances import bot, tree, version, shcogs
 from components.function.logging import log
@@ -28,6 +31,22 @@ log("~7     (c) 2025-2026 lauren k ~7/ ~4saltlegs.im          ")
 log(f"~7              (version {version})")
 
 purge_flag_path = "savedata/global_commands_purged.flag"
+
+async def backup_savedata():
+    """backup savedata folder every 3 hours"""
+    backups_dir = os.path.join(os.path.dirname(os.getcwd()), 'ldu_backups')
+    os.makedirs(backups_dir, exist_ok=True)
+    log(f"~2started backup process, saving to {backups_dir}")
+    
+    while True:
+        try:
+            await asyncio.sleep(3 * 60 * 60)  # 3 hours
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            backup_path = os.path.join(backups_dir, f'savedata_backup_{timestamp}')
+            shutil.make_archive(backup_path, 'zip', 'savedata')
+            log(f"~2savedata backed up to {backup_path}.zip")
+        except (OSError, shutil.Error) as e:
+            log(f"~1error backing up savedata: {e}")
 
 def int_to_string(i: int) -> str:
     length = (i.bit_length() + 7) // 8
@@ -90,7 +109,9 @@ async def on_ready():
     await purge_global_commands_once(bot)
     shcogs[:] = list(bot.cogs.keys())
     for guild in bot.guilds:
-        await sync_cogs_for_guild(bot, tree, guild) 
+        await sync_cogs_for_guild(bot, tree, guild)
+    
+    bot.loop.create_task(backup_savedata()) 
 
 @bot.event
 async def on_guild_join(guild):
