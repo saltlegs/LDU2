@@ -19,7 +19,6 @@ async def is_user_banned(user_id: int, guild_id: int) -> bool:
     except discord.HTTPException:
         raise ValueError("discord API error")
 
-
 async def sync_cogs_for_guild(bot, tree, guild):
     guild_obj = discord.Object(id=guild.id)
     tree.clear_commands(guild=guild_obj)

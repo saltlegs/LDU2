@@ -35,6 +35,7 @@ def level_to_points(level: int, confighandler: ConfigHandler) -> int:
     return int((level * k) ** 2)
 
 def get_guild_leaderboard(guild_id: int) -> list[tuple[int, int]]:
+    """returns the guild's leaderboard sorted high to low"""
     points_db = get_guild_attribute(guild_id, "points_data")
     if not isinstance(points_db, dict):
         log("~1tried to get guild leaderboard, failed due to missing or malformed data")

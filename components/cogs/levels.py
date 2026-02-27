@@ -153,7 +153,7 @@ class Levels(commands.Cog):
             await self.level_up(new_level, message.author, message.guild, confighandler)
 
 
-    async def level_up(self, level, user: discord.User, guild: discord.Guild, confighandler: ConfigHandler):
+    async def level_up(self, level, user: discord.User, guild: discord.Guild, confighandler: ConfigHandler, retroactive=False):
 
         guild_name = guild.name
 
@@ -216,7 +216,7 @@ class Levels(commands.Cog):
         shutup = get_guild_member_attribute(guild.id, user.id, "shutup")
         servershutup = confighandler.get_attribute("servershutup", fallback=False)
 
-        shutup = ( shutup or servershutup )
+        shutup = ( shutup or servershutup or retroactive )
 
         # format the strings and try our best to send them to the user
 
@@ -444,8 +444,8 @@ class Levels(commands.Cog):
             log(f"~1set_level_role: could not find config handler for guild {interaction.guild.name}")
             return
         
-        if level <= 1:
-            await interaction.response.send_message("level must be greater than 1", ephemeral=True)
+        if level <= 0:
+            await interaction.response.send_message("level must be greater than 0", ephemeral=True)
             return
         
         if role not in interaction.guild.roles:
@@ -456,11 +456,30 @@ class Levels(commands.Cog):
         if level in roles:
             await interaction.response.send_message(f"level {level} already has a role assigned", ephemeral=True)
             return
-        
         roles[level] = role.id
         confighandler.set_attribute("levels", roles)
         await interaction.response.send_message(f"set role {role.name} for level {level}", ephemeral=True)
         log(f"~2set level role {role.name} for level {level} in guild {interaction.guild.name}")
+
+        # give all members who should have the role already
+
+        leaderboard = lvbsc.get_guild_leaderboard(interaction.guild.id)
+        points_needed = lvbsc.level_to_points(level, confighandler)
+
+        applicable_members = []
+        for member_id, member_points in leaderboard:
+            if member_points >= points_needed:
+                applicable_members.append(member_id)
+
+        for member_id in applicable_members:
+            member = interaction.guild.get_member(member_id)
+            if member is None:
+                try:
+                    member = await interaction.guild.fetch_member(member_id)
+                except (discord.Forbidden, discord.NotFound, discord.HTTPException):
+                    continue
+            await self.level_up(level, member, interaction.guild, confighandler, retroactive=True)
+
 
     @discord.app_commands.default_permissions(manage_roles=True)
     @discord.app_commands.command(name="unset_level_role", description="clear a level of rewards")
@@ -470,8 +489,8 @@ class Levels(commands.Cog):
             log(f"~1unset_level_role: could not find config handler for guild {interaction.guild.name}")
             return
         
-        if level <= 1:
-            await interaction.response.send_message("level must be greater than 1", ephemeral=True)
+        if level <= 0:
+            await interaction.response.send_message("level must be greater than 0", ephemeral=True)
             return
         
         roles = confighandler.get_attribute("levels", fallback={})
