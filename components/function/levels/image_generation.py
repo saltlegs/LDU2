@@ -228,7 +228,7 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     return surface, surface.split()[3] # return mask
 
 
-LD_DEBUG = True
+LD_DEBUG = False
 if LD_DEBUG: 
     log("~3==================================================")
     log("~3WARN: LD_DEBUG is TRUE, turn off before deploying!")

@@ -41,7 +41,7 @@ FONT_TYPE = ".otf"
 
 FONT_SCALE = 0.9
 def scale(size):
-    return size * FONT_SCALE
+    return int(round(size * FONT_SCALE))
 
 BIGNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(100))
 MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(86))
