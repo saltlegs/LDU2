@@ -5,6 +5,7 @@ from discord import app_commands
 from components.function.logging import log
 from components.function.msgformat import format_msg
 from components.function.moderation.basic import gen_case, get_case_embed, make_simple_embed, str_to_seconds
+from components.function.moderation.actions import PREREQUISITES
 from components.function.api_shorthand import is_user_banned
 from components.classes.confighandler import ConfigHandler, register_config
 
@@ -63,6 +64,25 @@ class ModerationBeta(commands.Cog):
 
         await interaction.response.send_message(embed=make_simple_embed(f"note added: {comment}"), ephemeral=True)
 
+    async def handle_moderator_action(
+            confighandler:ConfigHandler,
+            interaction:discord.Interaction,
+            action_type:str,
+            target:discord.Member,
+            duration:str,
+            comment:str,
+            func,
+            *args
+    ):
+        config = confighandler
+        action_type = action_type.lower()
+
+        await interaction.response.defer()
+
+        # CHECK PREREQUISITES
+
+        allowed = PREREQUISITES[action_type]()
+
     @app_commands.default_permissions(discord.Permissions(ban_members=True))
     @app_commands.command(name="ban", description="ban a user")
     @app_commands.default_permissions(manage_messages=True)
@@ -93,7 +113,7 @@ class ModerationBeta(commands.Cog):
                 delete_message_seconds=0,
             )
         except discord.Forbidden:
-            await interaction.followup.send(embed=make_simple_embed(f"error", desc=f"i don't have permission to ban that user."), ephemeral=True)
+            await interaction.followup.send(embed=make_simple_embed(f"error", desc=f"i don't have permission to do that."), ephemeral=True)
             return
         except discord.NotFound:
             await interaction.followup.send(embed=make_simple_embed(f"error", desc=f"i can't find that user."), ephemeral=True)

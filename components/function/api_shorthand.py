@@ -3,6 +3,25 @@ import discord
 from components.shared_instances import bot, shcogs
 from components.function.savedata import get_guild_attribute, set_guild_attribute
 
+async def get_member_object(user_id:int, guild_id: int) -> discord.Member:
+    """checks if a user exists in a guild"""
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        raise ValueError("guild not found")
+    
+    member = guild.get_member(user_id)
+    if user:
+        return member
+    try:
+        user = await guild.fetch_member(user_id)
+        return member
+    except discord.NotFound:
+        return None
+    except discord.Forbidden:
+        raise ValueError("bot does not have permission to view users")
+    except discord.HTTPException:
+        raise ValueError("discord API error")
+
 async def is_user_banned(user_id: int, guild_id: int) -> bool:
     """checks if a user is banned in a guild"""
     guild = bot.get_guild(guild_id)
@@ -16,6 +35,25 @@ async def is_user_banned(user_id: int, guild_id: int) -> bool:
         return False
     except discord.Forbidden:
         raise ValueError("bot does not have permission to view bans")
+    except discord.HTTPException:
+        raise ValueError("discord API error")
+    
+async def does_user_exist(bot, user_id:int) -> bool:
+    """checks if a user exists"""
+    guild = bot.get_guild(guild_id)
+    if guild is None:
+        raise ValueError("guild not found")
+    
+    user = guild.get_member(user_id)
+    if user:
+        return True
+    try:
+        user = await guild.fetch_member(user_id)
+        return True
+    except discord.NotFound:
+        return False
+    except discord.Forbidden:
+        raise ValueError("bot does not have permission to view users")
     except discord.HTTPException:
         raise ValueError("discord API error")
 
