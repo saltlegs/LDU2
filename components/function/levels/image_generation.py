@@ -94,8 +94,9 @@ def get_page(leaderboard, max_rows=5, page_requested=1) -> tuple[list, bool]:
 def generate_progress_circle(entry, lb_index, theme):
 
     if lb_index in C.TOP3:
-        text_colour = C.TOP3[lb_index]  
-        # get the "reward colour" (gold, silver, bronze) for top 3 users
+        user_theme_colour = tuple(entry[7]) if entry[7] is not None else None
+        text_colour = user_theme_colour if user_theme_colour is not None else C.TOP3[lb_index]
+        # use the user's theme colour if set, otherwise fall back to gold/silver/bronze
     else:
         text_colour = theme["text"] 
         # get the text colour for requested theme
