@@ -24,20 +24,33 @@ def truncate(text, max_chars, ellipsis="…"):
         return ellipsis[:max_chars]
     return text[:max_chars - len(ellipsis)] + ellipsis
 
-def rounded_rect(draw, box, radius, fill):
+def rounded_rect(draw, box, radius, fill=None, border_width=0, border=None):
     x0, y0, x1, y1 = box
 
-    # corner circles
-    draw.pieslice([x0, y0, x0 + 2*radius, y0 + 2*radius], 180, 270, fill=fill)  # top-left
-    draw.pieslice([x1 - 2*radius, y0, x1, y0 + 2*radius], 270, 360, fill=fill)  # top-right
-    draw.pieslice([x0, y1 - 2*radius, x0 + 2*radius, y1], 90, 180, fill=fill)   # bottom-left
-    draw.pieslice([x1 - 2*radius, y1 - 2*radius, x1, y1], 0, 90, fill=fill)     # bottom-right
+    # clamp to max radius
+    max_radius = min((x1 - x0) // 2, (y1 - y0) // 2)
+    radius = min(radius, max_radius)
 
-    # vertical rectangle
-    draw.rectangle([x0, y0 + radius, x1, y1 - radius], fill=fill)
+    def _draw_filled(x0, y0, x1, y1, r, color):
+        draw.pieslice([x0, y0, x0 + 2*r, y0 + 2*r], 180, 270, fill=color)        # top-left
+        draw.pieslice([x1 - 2*r, y0, x1, y0 + 2*r], 270, 360, fill=color)        # top-right
+        draw.pieslice([x0, y1 - 2*r, x0 + 2*r, y1], 90, 180, fill=color)         # bottom-left
+        draw.pieslice([x1 - 2*r, y1 - 2*r, x1, y1], 0, 90, fill=color)           # bottom-right
+        draw.rectangle([x0, y0 + r, x1, y1 - r], fill=color)                     # vertical rect
+        draw.rectangle([x0 + r, y0, x1 - r, y1], fill=color)                     # horizontal rect
 
-    # horizontal rectangle
-    draw.rectangle([x0 + radius, y0, x1 - radius, y1], fill=fill)
+    if border is not None and border_width > 0:
+        # draw outer shape in border colour then inner shape in fill colour
+        _draw_filled(x0, y0, x1, y1, radius, border)
+        if fill is not None:
+            inner_r = max(0, radius - border_width)
+            _draw_filled(
+                x0 + border_width, y0 + border_width,
+                x1 - border_width, y1 - border_width,
+                inner_r, fill
+            )
+    elif fill is not None:
+        _draw_filled(x0, y0, x1, y1, radius, fill)
 
 def get_max_chars(font, width):
     single_char_width = font.getlength("X")
@@ -144,16 +157,13 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     # 6 PROGRESS,           7 USER THEME
     log(f"generating user unit for {entry[1]}")
 
-    if True: #entry[7] is None:
-        theme_palette = theme 
-    else:
-        theme_palette = b.make_palette(entry[7])
-
+    theme_palette = theme
+    border_colour = tuple(entry[7]) if entry[7] is not None else None
 
     width = C.LB_USER_UNIT_WIDTH
     width = width + C.RANK_CARD_UNIT_WIDTH_EXTENDER if rank_mode == True else width
 
-    surface = Image.new("RGBA", (width, C.LB_USER_UNIT_HEIGHT))
+    surface = Image.new("RGBA", (width+1, C.LB_USER_UNIT_HEIGHT+1)) # little buffer makes look nice
     draw = ImageDraw.Draw(surface)
     surf_bounds = Bounds((0,0,width,C.LB_USER_UNIT_HEIGHT))
 
@@ -170,8 +180,10 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     rounded_rect(
         draw=draw,
         box=surf_bounds.bounds,
-        radius=32,
-        fill=theme_palette["dark"]
+        radius=C.LB_USER_UNIT_CORNER_RADIUS,
+        fill=theme_palette["dark"],
+        border_width=C.LB_USER_UNIT_BORDER_WIDTH if border_colour is not None else C.LB_USER_UNIT_BORDER_WIDTH_THIN,
+        border=border_colour if border_colour is not None else (*theme_palette["text"], 80)
     )
 
     circle_topleft = (C.LB_C_PADDING, C.LB_C_PADDING)
@@ -216,12 +228,17 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     return surface, surface.split()[3] # return mask
 
 
+LD_DEBUG = True
+if LD_DEBUG: 
+    log("~3==================================================")
+    log("~3WARN: LD_DEBUG is TRUE, turn off before deploying!")
+    log("~3==================================================")
+
 def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list, max_rows: int, page_requested: int, theme: str = "red", icon=None) -> str:
     "returns the path of the leaderboard image"
 
-    debug = False
-
-    if debug:
+    if LD_DEBUG:
+        
         for i in range(30):
             dummy_entry = [
                 f"user{i+1}",       # DISPLAY NAME
@@ -282,7 +299,7 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
         rounded_rect(
             draw=ImageDraw.Draw(rounded_mask),
             box=(0, 0, C.LB_ICON_RADIUS, C.LB_ICON_RADIUS),
-            radius=20,
+            radius=C.LB_ICON_CORNER_RADIUS,
             fill=255
         )
 
@@ -375,13 +392,7 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
         )
         surface.paste(user_unit, (xpos, ypos), mask)
 
-    surface = surface.resize(
-        (
-            C.LB_WIDTH // 2,
-            image_height // 2
-        ),
-        resample=Image.LANCZOS
-    )
+    surface = surface.reduce(2) 
 
     timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
     savepath = C.TEMP_IMAGE_PATH / f"{guild_id}_{timestamp}.png"
@@ -468,13 +479,7 @@ def generate_rank_card_image(guild_id: int, guild_name: str, leaderboard: list, 
         mask=mask
     )
 
-    surface = surface.resize(
-        (
-            C.RANK_CARD_WIDTH // 3,
-            C.RANK_CARD_HEIGHT // 3
-        ),
-        resample=Image.LANCZOS
-    )
+    surface = surface.reduce(3)  # box average downsample — clean supersampling for integer scale factors
 
     user_id = entry[2]
 

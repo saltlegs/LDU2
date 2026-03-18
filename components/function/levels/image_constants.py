@@ -39,18 +39,23 @@ TOP3 = {
 # support variable width typefaces!
 FONT_TYPE = ".otf"
 
-BIGNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 100)
-MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 86)
-SMALLNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 65)
-TITLE = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 105)
-BODY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 72)
-BODY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", 42)
-TINY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", 33)
-TINY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", 33)
+FONT_SCALE = 0.9
+def scale(size):
+    return size * FONT_SCALE
+
+BIGNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(100))
+MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(86))
+SMALLNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(65))
+TITLE = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(105))
+BODY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(72))
+BODY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", scale(42))
+TINY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(33))
+TINY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", scale(33))
 
 # LEVEL CIRCLE CONSTANTS
 
-C_HEIGHT, C_WIDTH = 165,165
+C_RADIUS = 160
+C_HEIGHT, C_WIDTH = (C_RADIUS, C_RADIUS)
 C_OFFSET = 1            # padding around edge of circle to prevent clipping
 
 # circle exp indicator arc constants
@@ -67,7 +72,7 @@ T_V_OFFSET = -8          # text vertical offset (positive = up)
 
 PADDING = C_OFFSET * 2
 S_HEIGHT, S_WIDTH = C_HEIGHT + PADDING, C_WIDTH + PADDING # padding to prevent clipping
-S_DIMS = (S_WIDTH, S_HEIGHT)
+S_DIMS = (S_WIDTH+1, S_HEIGHT+1)
 C_DIMS = (C_WIDTH, C_HEIGHT)
 
 LB_WIDTH = 1800             # height is calculated dynamically based on amount of rows specified
@@ -79,9 +84,13 @@ LB_TITLE_META_WIDTH = 345   # region reserved for date & page count
 LB_TITLE_TEXT_WIDTH = LB_WIDTH - LB_TITLE_META_WIDTH
 
 COLUMN_WIDTH = LB_WIDTH // 2    # column is half each of width
-COLUMN_PADDING = (8, 4)         # edge, middle
+COLUMN_PADDING = (10, 5)         # edge, middle
 LB_USER_UNIT_HEIGHT = 180
 LB_USER_UNIT_WIDTH = COLUMN_WIDTH - (COLUMN_PADDING[0] + (COLUMN_PADDING[1] // 2))
+LB_USER_UNIT_CORNER_RADIUS = 120
+LB_USER_UNIT_BORDER_WIDTH = 6       # when user has theme set
+LB_USER_UNIT_BORDER_WIDTH_THIN = 3   # default
+LB_ICON_CORNER_RADIUS = 120
 # i.e. | 8 | user unit | 4 | 4 | user | 8 |
 # uses full 8 of padding but for both shared in the middle
 X_LEFT_COLUMN = COLUMN_PADDING[0]
