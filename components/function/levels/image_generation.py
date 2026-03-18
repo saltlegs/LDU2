@@ -159,7 +159,12 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     log(f"generating user unit for {entry[1]}")
 
     theme_palette = theme
-    border_colour = tuple(entry[7]) if entry[7] is not None else None
+    if entry[7] is not None:
+        border_colour = tuple(entry[7])
+    elif lb_index in C.TOP3:
+        border_colour = C.TOP3[lb_index]
+    else:
+        border_colour = None
 
     width = C.LB_USER_UNIT_WIDTH
     width = width + C.RANK_CARD_UNIT_WIDTH_EXTENDER if rank_mode == True else width
