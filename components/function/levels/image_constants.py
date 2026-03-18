@@ -88,7 +88,7 @@ COLUMN_PADDING = (10, 5)         # edge, middle
 LB_USER_UNIT_HEIGHT = 180
 LB_USER_UNIT_WIDTH = COLUMN_WIDTH - (COLUMN_PADDING[0] + (COLUMN_PADDING[1] // 2))
 LB_USER_UNIT_CORNER_RADIUS = 120
-LB_USER_UNIT_BORDER_WIDTH = 6       # when user has theme set
+LB_USER_UNIT_BORDER_WIDTH = 3       # when user has theme set
 LB_USER_UNIT_BORDER_WIDTH_THIN = 3   # default
 LB_ICON_CORNER_RADIUS = 120
 # i.e. | 8 | user unit | 4 | 4 | user | 8 |
