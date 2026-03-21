@@ -11,7 +11,8 @@ from components.function.savedata import set_guild_attribute, get_guild_attribut
 from components.classes.confighandler import ConfigHandler, register_config
 from components.shared_instances import POINTS_DATABASE, DEVTAG, shcogs
 import components.function.levels.basic as lvbsc
-import components.function.levels.image_generation as lvimg
+import components.function.levels.leaderboard as lvlb
+import components.function.levels.rank_card as lvrc
 
 recent_speakers = {}
 
@@ -588,7 +589,7 @@ class Levels(commands.Cog):
             await interaction.response.send_message(f"{'you' if self else 'they'} are not on the leaderboard yet!", ephemeral=True)
             return
 
-        image_path = lvimg.generate_rank_card_image(
+        image_path = lvrc.generate_rank_card_image(
             guild_id=interaction.guild.id,
             guild_name=interaction.guild.name,
             leaderboard=leaderboard,
@@ -625,7 +626,7 @@ class Levels(commands.Cog):
             confighandler=confighandler
         )
 
-        image_path = lvimg.generate_leaderboard_image(
+        image_path = lvlb.generate_leaderboard_image(
             guild_id=interaction.guild.id,
             guild_name=interaction.guild.name,
             leaderboard=leaderboard,

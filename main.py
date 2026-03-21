@@ -40,7 +40,7 @@ async def backup_savedata():
     
     while True:
         try:
-            await asyncio.sleep(3 * 60 * 60)  # 3 hours
+            await asyncio.sleep(6 * 60 * 60)  # 6 hours
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             backup_path = os.path.join(backups_dir, f'savedata_backup_{timestamp}')
             shutil.make_archive(backup_path, 'zip', 'savedata')
