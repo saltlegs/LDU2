@@ -14,6 +14,7 @@ import asyncio
 import os
 import sys
 import shutil
+import zipfile
 from datetime import datetime
 
 from components.shared_instances import bot, tree, version, shcogs
@@ -43,9 +44,14 @@ async def backup_savedata():
             await asyncio.sleep(6 * 60 * 60)  # 6 hours
             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
             backup_path = os.path.join(backups_dir, f'savedata_backup_{timestamp}')
-            shutil.make_archive(backup_path, 'zip', 'savedata')
+            with zipfile.ZipFile(backup_path + '.zip', 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for root, dirs, files in os.walk('savedata'):
+                    dirs[:] = [d for d in dirs if os.path.join(root, d) != os.path.join('savedata', 'temp')]
+                    for file in files:
+                        file_path = os.path.join(root, file)
+                        zipf.write(file_path, os.path.relpath(file_path, 'savedata'))
             log(f"~2savedata backed up to {backup_path}.zip")
-        except (OSError, shutil.Error) as e:
+        except (OSError, zipfile.BadZipFile) as e:
             log(f"~1error backing up savedata: {e}")
 
 def int_to_string(i: int) -> str:
