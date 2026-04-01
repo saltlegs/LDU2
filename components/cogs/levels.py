@@ -15,6 +15,7 @@ import components.function.levels.leaderboard as lvlb
 import components.function.levels.rank_card as lvrc
 
 recent_speakers = {}
+_position_role_update_cooldowns = {}
 
 async def save_points_regular(interval=5):
     while True:
@@ -153,6 +154,8 @@ class Levels(commands.Cog):
         if has_levelled_up:
             await self.level_up(new_level, message.author, message.guild, confighandler)
 
+        await self.update_position_roles(message.guild, confighandler)
+
 
     async def level_up(self, level, user: discord.User, guild: discord.Guild, confighandler: ConfigHandler, retroactive=False):
 
@@ -241,6 +244,45 @@ class Levels(commands.Cog):
                 await channel.send(alert_message)
                 log(f"~2sent level up message to {user.name} in {channel.name}")
 
+    async def update_position_roles(self, guild: discord.Guild, confighandler: ConfigHandler, force: bool = False):
+        position_roles = confighandler.get_attribute("position_roles", fallback={})
+        if not position_roles:
+            return
+
+        now = time.time()
+        last_update = _position_role_update_cooldowns.get(guild.id, 0)
+        if not force and now - last_update < 60:
+            return
+        _position_role_update_cooldowns[guild.id] = now
+
+        leaderboard = lvbsc.get_guild_leaderboard(guild.id)
+
+        for pos, role_id in position_roles.items():
+            pos = int(pos)
+            role = guild.get_role(role_id)
+            if role is None:
+                continue
+
+            target_member = None
+            if pos <= len(leaderboard):
+                target_user_id = leaderboard[pos - 1][0]
+                target_member = guild.get_member(target_user_id)
+
+            if target_member and role not in target_member.roles:
+                try:
+                    await target_member.add_roles(role)
+                    log(f"~2gave position {pos} role {role.name} to {target_member.name} in {guild.name}")
+                except (discord.Forbidden, discord.HTTPException) as e:
+                    log(f"~1failed to give position role {role.name} to {target_member.name}: {e}")
+
+            for member in role.members:
+                if target_member is None or member.id != target_member.id:
+                    try:
+                        await member.remove_roles(role)
+                        log(f"~2removed position {pos} role {role.name} from {member.name} in {guild.name}")
+                    except (discord.Forbidden, discord.HTTPException) as e:
+                        log(f"~1failed to remove position role {role.name} from {member.name}: {e}")
+
     @discord.app_commands.default_permissions(manage_roles=True)
     @discord.app_commands.command(name="add_points", description="add points to a user")
     async def add_points(self, interaction: discord.Interaction, user: discord.User, amount: int):
@@ -255,6 +297,7 @@ class Levels(commands.Cog):
         if has_levelled_up:
             await self.level_up(new_level, user, interaction.guild, confighandler)
 
+        await self.update_position_roles(interaction.guild, confighandler, force=True)
         await interaction.response.send_message(f"added {amount} points to {user.mention}", allowed_mentions=discord.AllowedMentions.none())
 
     @discord.app_commands.default_permissions(manage_roles=True)
@@ -284,6 +327,7 @@ class Levels(commands.Cog):
         if has_levelled_up:
             await self.level_up(user_level_after, user, interaction.guild, confighandler)
 
+        await self.update_position_roles(interaction.guild, confighandler, force=True)
         await interaction.response.send_message(f"set {user.mention}'s points to {amount}", allowed_mentions=discord.AllowedMentions.none())
 
 
@@ -505,6 +549,84 @@ class Levels(commands.Cog):
             await interaction.response.send_message(f"that level doesn't have a role reward, so it couldn't be deleted.", ephemeral=True)
             log(f"~2tried to clear level role for level {level} in guild {interaction.guild.name}, but there was no role to clear.")
         
+    @discord.app_commands.default_permissions(manage_roles=True)
+    @discord.app_commands.command(name="set_position_role", description="set a role to be given to a leaderboard position")
+    async def set_position_role(self, interaction: discord.Interaction, position: int, role: discord.Role):
+        confighandler = self.confighandlers.get(interaction.guild.id, None)
+        if confighandler is None:
+            log(f"~1set_position_role: could not find config handler for guild {interaction.guild.name}")
+            return
+
+        if position <= 0:
+            await interaction.response.send_message("position must be greater than 0", ephemeral=True)
+            return
+
+        if role not in interaction.guild.roles:
+            await interaction.response.send_message("role not found in guild", ephemeral=True)
+            return
+
+        position_roles = confighandler.get_attribute("position_roles", fallback={})
+        position_roles[position] = role.id
+        confighandler.set_attribute("position_roles", position_roles)
+        await interaction.response.send_message(f"set role {role.mention} for leaderboard position {position}", ephemeral=True, allowed_mentions=discord.AllowedMentions.none())
+        log(f"~2set position role {role.name} for position {position} in guild {interaction.guild.name}")
+
+        await self.update_position_roles(interaction.guild, confighandler)
+
+    @discord.app_commands.default_permissions(manage_roles=True)
+    @discord.app_commands.command(name="unset_position_role", description="clear a leaderboard position of its role reward")
+    async def unset_position_role(self, interaction: discord.Interaction, position: int):
+        confighandler = self.confighandlers.get(interaction.guild.id, None)
+        if confighandler is None:
+            log(f"~1unset_position_role: could not find config handler for guild {interaction.guild.name}")
+            return
+
+        if position <= 0:
+            await interaction.response.send_message("position must be greater than 0", ephemeral=True)
+            return
+
+        position_roles = confighandler.get_attribute("position_roles", fallback={})
+        if position in position_roles:
+            role_id = position_roles.pop(position)
+            confighandler.set_attribute("position_roles", position_roles)
+            role = interaction.guild.get_role(role_id)
+            if role:
+                for member in role.members:
+                    try:
+                        await member.remove_roles(role)
+                    except (discord.Forbidden, discord.HTTPException):
+                        pass
+            await interaction.response.send_message(f"cleared the role reward for leaderboard position {position}", ephemeral=True)
+            log(f"~2cleared position role for position {position} in guild {interaction.guild.name}")
+        else:
+            await interaction.response.send_message(f"position {position} doesn't have a role reward set", ephemeral=True)
+
+    @discord.app_commands.command(name="position_roles", description="get the list of leaderboard position role rewards")
+    async def position_roles_list(self, interaction: discord.Interaction):
+        allowed_mentions = discord.AllowedMentions.none()
+        confighandler = self.confighandlers.get(interaction.guild.id, None)
+        if confighandler is None:
+            log(f"~1position_roles: could not find config handler for guild {interaction.guild.name}")
+            await interaction.response.send_message("there was an error with this guild's confighandler", ephemeral=True, allowed_mentions=allowed_mentions)
+            return
+
+        position_roles = confighandler.get_attribute("position_roles", fallback={})
+        if not position_roles:
+            await interaction.response.send_message("no leaderboard position role rewards are set for this server.", ephemeral=True, allowed_mentions=allowed_mentions)
+            return
+
+        lines = []
+        for pos, role_id in sorted(position_roles.items(), key=lambda x: int(x[0])):
+            role = interaction.guild.get_role(role_id)
+            pos_label = f"#{pos}"
+            if role:
+                lines.append(f"{pos_label}: {role.mention}")
+            else:
+                lines.append(f"{pos_label}: (role not found, id: {role_id})")
+
+        msg = "leaderboard position role rewards for this server:\n" + "\n".join(lines)
+        await interaction.response.send_message(msg, allowed_mentions=allowed_mentions)
+
     @discord.app_commands.command(name="roles", description="get the list of role rewards for this server")
     async def roles(self, interaction: discord.Interaction):
         allowed_mentions = discord.AllowedMentions.none()
