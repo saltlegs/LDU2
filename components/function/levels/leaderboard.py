@@ -2,6 +2,7 @@ from PIL import Image, ImageDraw, ImageChops
 import math
 import random
 import io
+import unicodedata
 from datetime import datetime
 
 import components.shared_instances as shared
@@ -13,6 +14,7 @@ from components.function.levels.graphics import (
     get_max_chars,
     rounded_rect,
     generate_user_unit,
+    normalise_to_ascii,
 )
 
 
@@ -121,6 +123,7 @@ def generate_leaderboard_image(guild_id: int, guild_name: str, leaderboard: list
         surface.paste(icon, (C.LB_TITLE_PADDING_L//2, C.LB_TITLE_PADDING_U//2), combined_mask)
 
     title_text = guild_name
+    title_text = normalise_to_ascii(title_text)
     title_font = C.TITLE
     title_max_chars = get_max_chars(title_font, C.LB_TITLE_TEXT_WIDTH - icon_offset)
 

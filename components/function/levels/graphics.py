@@ -1,8 +1,27 @@
 from PIL import Image, ImageDraw
+import unicodedata
 
 import components.function.levels.image_constants as C
 from components.classes.bounds import Bounds
 from components.function.logging import log
+
+
+def normalise_to_ascii(text: str) -> str:
+    if not text:
+        return text
+    result = []
+    for char in text:
+        try:
+            char.encode('ascii')
+            result.append(char)
+        except UnicodeEncodeError:
+            normalised = unicodedata.normalize('NFKD', char)
+            try:
+                normalised.encode('ascii')
+                result.append(normalised)
+            except UnicodeEncodeError:
+                result.append(char)
+    return ''.join(result)
 
 
 # entry format:
@@ -133,6 +152,7 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     surf_bounds = Bounds((0, 0, width, C.LB_USER_UNIT_HEIGHT))
 
     user_name = entry[1]
+    user_name = normalise_to_ascii(user_name)
     total_points = entry[4]
     points_to_next_level = entry[5]
 
