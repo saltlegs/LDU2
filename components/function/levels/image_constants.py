@@ -47,6 +47,7 @@ BIGNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(100))
 MEDNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(86))
 SMALLNUMBER = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(65))
 TITLE = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(105))
+TITLE_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", scale(90))
 BODY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(72))
 BODY_LIGHT = ImageFont.truetype(f"{TYPES_PATH}light{FONT_TYPE}", scale(42))
 TINY = ImageFont.truetype(f"{TYPES_PATH}typeface{FONT_TYPE}", scale(33))
@@ -107,7 +108,7 @@ LB_USER_UNIT_TEXT_WIDTH = LB_USER_UNIT_WIDTH - ((LB_C_PADDING * 3) + C_WIDTH)
 
 # i.e. | cpad | circle | cpad | text | cpad |
 
-RANK_CARD_UNIT_WIDTH_EXTENDER = 250
+RANK_CARD_UNIT_WIDTH_EXTENDER = 600
 
 RANK_CARD_TITLE_WIDTH = LB_TITLE_TEXT_WIDTH
 RANK_CARD_META_WIDTH = LB_TITLE_META_WIDTH

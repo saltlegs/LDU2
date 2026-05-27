@@ -133,7 +133,7 @@ def generate_progress_circle(entry, lb_index, theme):
     return surface, surface.split()[3]  # return mask
 
 
-def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
+def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False, leaderboard_size: int = 0, rank_top_text: str = None, rank_bottom_text: str = None):
     log(f"generating user unit for {entry[1]}")
 
     theme_palette = theme
@@ -170,9 +170,16 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
     circle_topleft = (C.LB_C_PADDING, C.LB_C_PADDING)
     surface.paste(level_circle, circle_topleft, level_circle_mask)
 
-    top_text = f"{user_name}" if not rank_mode else f"{total_points} points"
+    if rank_mode and rank_top_text is not None:
+        top_text = rank_top_text
+    elif rank_mode:
+        top_text = f"{total_points} points"
+    else:
+        top_text = user_name
+    unit_text_width = width - ((C.LB_C_PADDING * 3) + C.C_WIDTH)
+
     top_font = C.BODY
-    top_max_chars = get_max_chars(top_font, C.LB_USER_UNIT_TEXT_WIDTH)
+    top_max_chars = get_max_chars(top_font, unit_text_width)
 
     top_text = truncate(
         text=top_text,
@@ -187,9 +194,9 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
         anchor="lb"
     )
 
-    bottom_text = f"{points_to_next_level} points to next level"
+    bottom_text = rank_bottom_text if (rank_mode and rank_bottom_text is not None) else f"{points_to_next_level} points to next level"
     bottom_font = C.BODY_LIGHT
-    bottom_max_chars = get_max_chars(bottom_font, C.LB_USER_UNIT_TEXT_WIDTH)
+    bottom_max_chars = get_max_chars(bottom_font, unit_text_width)
 
     bottom_text = truncate(
         text=bottom_text,
@@ -204,4 +211,4 @@ def generate_user_unit(entry, lb_index: int, theme: tuple, rank_mode=False):
         anchor="la"
     )
 
-    return surface, surface.split()[3]  # return mask
+    return surface, surface.split()[3]

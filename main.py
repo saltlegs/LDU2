@@ -19,7 +19,8 @@ from datetime import datetime
 
 from components.shared_instances import bot, tree, version, shcogs
 from components.function.logging import log
-from components.function.api_shorthand import sync_cogs_for_guild                                                            
+from components.function.api_shorthand import sync_cogs_for_guild     
+from components.function.notif import send_dev_notif                                                      
 log("~5                     ▄▄▄▄            ▄▄                     ")
 log("~1                     ▀▀██            ██                     ")
 log("~3  ▄█████▄              ██       ▄███▄██  ██    ██           ")
@@ -116,18 +117,24 @@ async def on_ready():
     shcogs[:] = list(bot.cogs.keys())
     for guild in bot.guilds:
         await sync_cogs_for_guild(bot, tree, guild)
+    await send_dev_notif(bot, f"<@237186214791217153> bot started, {len(bot.guilds)} guilds joined")
     
     bot.loop.create_task(backup_savedata()) 
 
+
 @bot.event
-async def on_guild_join(guild):
+async def on_guild_join(guild: discord.Guild):
     log(f"joined guild {guild.name}")
     await sync_cogs_for_guild(bot, tree, guild)
     await guild.owner.send(f"thank you for inviting LDU to {guild.name}!\n\nmake sure to have a look at the documentation here: https://www.saltlegs.im/ldu/lduhelp.html\n\nif you need any assistance or have a suggestion, feel free to reach out on our support server: https://discord.gg/hTNWJnmuDK")
 
+    await send_dev_notif(bot, f"<@237186214791217153> added to server {guild.name} owned by {guild.owner.name}")
+
 @bot.event
-async def on_guild_remove(guild):
+async def on_guild_remove(guild: discord.Guild):
     log(f"removed from guild {guild.name}")
+    await send_dev_notif(bot, f"<@237186214791217153> removed from server {guild.name} owned by {guild.owner.name}")
+
 
 @bot.event
 async def on_interaction(interaction: discord.Interaction):

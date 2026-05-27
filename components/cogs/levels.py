@@ -711,12 +711,15 @@ class Levels(commands.Cog):
             await interaction.response.send_message(f"{'you' if self else 'they'} are not on the leaderboard yet!", ephemeral=True)
             return
 
+        avatar_bytes = await target.display_avatar.read()
+
         image_path = lvrc.generate_rank_card_image(
             guild_id=interaction.guild.id,
             guild_name=interaction.guild.name,
             leaderboard=leaderboard,
             user_requested=user_id,
-            theme=theme
+            theme=theme,
+            avatar=avatar_bytes
         )
 
         if not image_path:

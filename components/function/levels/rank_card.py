@@ -1,5 +1,6 @@
-from PIL import Image, ImageDraw
+from PIL import Image, ImageDraw, ImageChops
 from datetime import datetime
+import io
 
 import components.function.levels.image_constants as C
 import components.function.levels.basic as b
@@ -8,6 +9,7 @@ from components.function.levels.graphics import (
     truncate,
     get_max_chars,
     generate_user_unit,
+    rounded_rect,
 )
 
 
@@ -26,26 +28,15 @@ def find_user_in_leaderboard(leaderboard, user_id):
     return None, -1
 
 
-def generate_rank_card_image(guild_id: int, guild_name: str, leaderboard: list, user_requested: int, theme: str = "red") -> str:
+def generate_rank_card_image(guild_id: int, guild_name: str, leaderboard: list, user_requested: int, theme: str = "red", avatar=None) -> str:
     "returns the path of the rank card image"
 
-    # accept both string and tuple themes
-    if isinstance(theme, str):
-        if theme not in C.PALETTES:
-            theme = "red"
-        theme_palette = b.make_palette(C.PALETTES[theme])
-    elif isinstance(theme, tuple) and len(theme) == 3:
-        theme_palette = b.make_palette(theme)
-    else:
-        theme_palette = b.make_palette((220, 50, 70))  # fallback to red
+    theme_palette = b.make_palette(C.PALETTES["black"])
 
     entry, lb_index = find_user_in_leaderboard(leaderboard, user_requested)
     if entry is None:
         log(f"~1user {user_requested} not found in leaderboard, can't generate rank card")
         return None
-
-    if entry[7] is not None:
-        theme_palette = b.make_palette(entry[7])
 
     surface = Image.new(
         size=(C.RANK_CARD_WIDTH, C.RANK_CARD_HEIGHT),
@@ -54,26 +45,48 @@ def generate_rank_card_image(guild_id: int, guild_name: str, leaderboard: list, 
     )
     draw = ImageDraw.Draw(surface)
 
-    title_text = entry[1]  # username
-    title_font = C.TITLE
-    title_max_chars = get_max_chars(title_font, C.RANK_CARD_TITLE_WIDTH)
+    avatar_offset = 0
+    if avatar is not None:
+        avatar_size = C.LB_ICON_RADIUS
+        av_img = Image.open(io.BytesIO(avatar))
+        av_img = av_img.resize((avatar_size, avatar_size), resample=Image.LANCZOS).convert("RGBA")
+        rounded_mask = Image.new("L", (avatar_size, avatar_size), 0)
+        rounded_rect(
+            draw=ImageDraw.Draw(rounded_mask),
+            box=(0, 0, avatar_size, avatar_size),
+            radius=C.LB_ICON_CORNER_RADIUS,
+            fill=255
+        )
+        av_alpha = av_img.split()[3]
+        combined_mask = ImageChops.multiply(av_alpha, rounded_mask)
+        surface.paste(av_img, (C.LB_TITLE_PADDING_L // 2, C.LB_TITLE_PADDING_U // 2), combined_mask)
+        avatar_offset = avatar_size + C.LB_TITLE_PADDING_L // 2
 
-    title_text = truncate(
-        text=title_text,
-        max_chars=title_max_chars
-    )
+    display_name = truncate(entry[0], get_max_chars(C.BODY, C.RANK_CARD_TITLE_WIDTH - avatar_offset))
+    username_text = truncate(f"@{entry[1]}", get_max_chars(C.BODY_LIGHT, C.RANK_CARD_TITLE_WIDTH - avatar_offset))
+    rank_text = f"#{lb_index + 1}" #/{len(leaderboard)}"
+    guild_text = truncate(guild_name, get_max_chars(C.TINY_LIGHT, C.RANK_CARD_META_WIDTH))
+    right_x = C.RANK_CARD_WIDTH - C.LB_TITLE_PADDING_L
+    meta_line_step = C.TINY_LIGHT.getbbox("A")[3] + 7
 
-    draw.text(
-        xy=(
-            C.LB_TITLE_PADDING_L,
-            C.LB_TITLE_PADDING_U
-        ),
-        text=title_text,
-        font=title_font,
-        fill=theme_palette["text"]
-    )
+    draw.text((C.LB_TITLE_PADDING_L + avatar_offset, C.LB_TITLE_PADDING_U), display_name, font=C.BODY, fill=theme_palette["text"], anchor="lt")
+    draw.text((C.LB_TITLE_PADDING_L + avatar_offset, 97), username_text, font=C.BODY_LIGHT, fill=theme_palette["text"], anchor="lt")
+    draw.text((right_x, C.LB_TITLE_PADDING_U), guild_text, font=C.TINY_LIGHT, fill=theme_palette["text"], anchor="rt")
+    draw.text((right_x, C.LB_TITLE_PADDING_U + meta_line_step + 2), rank_text, font=C.TITLE_LIGHT, fill=theme_palette["text"], anchor="rt")
 
-    user_unit, mask = generate_user_unit(entry, lb_index, theme_palette, rank_mode=True)
+    rank_top_text = f"{entry[5]} points to next level"
+    if len(leaderboard) == 1:
+        rank_bottom_text = None
+    elif lb_index == 0:
+        next_entry = leaderboard[1]
+        gap = entry[4] - next_entry[4]
+        rank_bottom_text = f"{gap} points ahead of {next_entry[1]}"
+    else:
+        above_entry = leaderboard[lb_index - 1]
+        gap = above_entry[4] - entry[4]
+        rank_bottom_text = f"{gap} points behind {above_entry[1]}"
+
+    user_unit, mask = generate_user_unit(entry, lb_index, theme_palette, rank_mode=True, leaderboard_size=len(leaderboard), rank_top_text=rank_top_text, rank_bottom_text=rank_bottom_text)
 
     unit_pos = (
         C.RANK_CARD_LEFT_PAD,
@@ -86,7 +99,7 @@ def generate_rank_card_image(guild_id: int, guild_name: str, leaderboard: list, 
         mask=mask
     )
 
-    surface = surface.reduce(3)  # box average downsample — clean supersampling for integer scale factors
+    surface = surface.reduce(2)
 
     user_id = entry[2]
 
